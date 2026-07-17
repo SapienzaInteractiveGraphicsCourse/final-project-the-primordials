@@ -1,49 +1,70 @@
-# Primordia — 3D Emergence Lab
+# The Primordials
 
-A 3D particle-life simulation with Barnes–Hut gravity and a piloted articulated creature.
-Everything is generated in JS — no assets, no build step.
+A 3D emergent-life sandbox built with Three.js: **Barnes–Hut N-body gravity** combined with **short-range particle-life "chemistry"**, a piloted, procedurally-animated hierarchical creature, real-time space-warping tools, and a dynamic streamline visualization of the gravitational field.
 
-## Running
+Project for the **Interactive Graphics** course — Prof. Marco Schaerf, Dept. of Computer, Control and Management Engineering (DIAG), Sapienza University of Rome.
 
-Open `index.html` in a browser. That's it — the files load as classic scripts, so
-`file://` works with no local server needed.
+**🔗 Live demo:** https://sapienzainteractivegraphicscourse.github.io/final-project-the-primordials/
 
-## Directory layout
+**📄 Project report:** _[link to be added]_
 
+---
+
+## Overview
+
+The Primordials simulates thousands of particles under two combined force scales:
+
+- **Chemistry (short-range):** an asymmetric, type-based attraction/repulsion matrix (à la particle-life / Clusters) that produces emergent local patterns — cells, chasing trails, worms, crystals.
+- **Gravity (long-range):** universal mass-based attraction accelerated with a Barnes–Hut octree, producing large-scale structures such as clusters and orbits.
+
+Both scales can run together or separately, and every rule is exposed as a live, tunable control.
+
+## Features
+
+- **Hierarchical, procedurally-animated creature ("the Grazer")** — a piloted articulated model (hip → thigh → knee → shin → foot, per leg) with a JavaScript-driven procedural gait, no imported animations. It exerts its own attract/repel force field on nearby particles and has a solid body that particles collide with.
+- **Barnes–Hut octree gravity** — O(N log N) N-body simulation with adjustable accuracy/speed trade-off (θ), softening, and an octree visualization.
+- **Particle-life chemistry** — an editable NxN attraction-rule matrix, adjustable interaction radius, repulsion core, and friction.
+- **Space intervention tools** — Push, Pull, and an aggressive Warp tool (swirl + collapse + axial lensing) to physically deform the simulation space, plus one-shot impulses (Shockwave, Implode, Vortex, Warp, Fold, Jitter), all scaled by a global intensity control.
+- **Deforming space lattice** — a wireframe grid that visibly bends under gravity and warps under the space tools.
+- **Flowing gravitational-field visualization** — animated streamlines with pulses that travel along the field vectors toward mass, in the style of fluid-dynamics flow visualization.
+- **Presets** — one-click configurations (Cells, Chase, Galaxies, Web, Orbits, Worms, Crystal, Nebula, Swarm) demonstrating different emergent regimes.
+- **Full camera and interaction controls** — orbit, pan, zoom, follow-camera mode (auto-disables on manual pan), and a collapsible control panel with an explanation for every setting.
+
+## Environment & libraries
+
+- **Rendering:** [Three.js](https://threejs.org/) (WebGL)
+- No physics engine, no imported models, no imported animations — all geometry, animation, and simulation logic is implemented in JavaScript for this project.
+
+## Controls
+
+| Input | Action |
+|---|---|
+| Left-drag | Active tool (Orbit / Push / Pull / Warp) |
+| Right-drag | Orbit camera |
+| Middle-drag / Shift + drag | Pan camera (disables Follow if active) |
+| Scroll | Zoom |
+| W A S D | Pilot the Grazer |
+| Q / E | Grazer up / down |
+| Shift | Boost |
+| H | Toggle control panel |
+
+## Running locally
+
+This is a self-contained static page — no build step required.
+
+```bash
+git clone https://github.com/SapienzaInteractiveGraphicsCourse/final-project-the-primordials.git
+cd final-project-the-primordials
+# open index.html directly, or serve it locally, e.g.:
+python3 -m http.server 8000
 ```
-primordia/
-├── index.html          markup + script load order
-├── css/
-│   └── style.css       all styling (panel, HUD, sliders, matrix, pilot hint)
-└── js/
-    ├── config.js       CFG tunables, Poke state, PALETTE
-    ├── scene.js        renderer, camera, lights, cage, procedural textures
-    ├── particles.js    SoA buffers, seeding, attraction matrix, InstancedMesh
-    ├── creature.js     Grazer model, procedural gait, WASD piloting
-    ├── grid.js         uniform grid (short-range) + particle-life force kernel
-    ├── octree.js       Barnes–Hut octree (long-range gravity)
-    ├── simulation.js   integrator + debug visualisations + mesh sync
-    ├── camera.js       orbit/zoom + poke input
-    ├── ui.js           console panel, matrix editor, presets, perturbations
-    └── main.js         frame loop, HUD, bootstrap
-```
 
-## How the split works
+Then visit `http://localhost:8000`.
 
-The original file was one script sharing a single global scope. Rather than rewriting
-it into ES modules (which would mean adding `export`/`import` to every cross-file
-reference and would require a server), the code is split into **classic scripts loaded
-in dependency order**. Top-level `const`/`let`/`function` declarations are still visible
-to every script that loads after them, so the code is unchanged — only relocated.
+## Credits
 
-**The order in `index.html` matters.** Each file assumes the ones above it have already
-run. `config.js` first (everything reads `CFG`), `main.js` last (it bootstraps). Each
-file's header comment lists what it depends on.
+Concept inspired by hunar4321's *Particle Life* and Jeffrey Ventrella's *Clusters*, extended to 3D with variable mass, Barnes–Hut gravity, space-warping tools, and a piloted articulated creature.
 
-## If you later want ES modules
+## Authors
 
-Add `type="module"` to a single `<script src="js/main.js">`, then in each file export
-what other files use and import it where needed. You'd need to serve over `http://`
-(e.g. `python3 -m http.server`) since modules are blocked on `file://`. The current
-dependency order in `index.html` is exactly the import graph you'd be encoding, so the
-work is mechanical.
+_[team member names]_
