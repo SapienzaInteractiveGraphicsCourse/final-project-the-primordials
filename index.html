@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>PRIMORDIA — 3D Emergence Lab</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app"></div>
+
+<div id="console">
+  <div class="head">
+    <div id="hide" title="Hide panel (H)">◀</div>
+    <p class="eyebrow">Barnes–Hut · N-body</p>
+    <h1 class="title">Primordia</h1>
+    <p class="sub">3D emergence lab. Simple type rules → complex structure. Drag to orbit · scroll to zoom.</p>
+  </div>
+  <div class="scroll" id="panel"></div>
+</div>
+<button id="tab" title="Show console">☰</button>
+
+<div id="hud"></div>
+
+<div id="pilot">
+  <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+  <span><kbd>Q</kbd><kbd>E</kbd> up/down</span>
+  <span><kbd>Shift</kbd> boost</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Load order matters: each file assumes the ones above it are already evaluated. -->
+<script src="js/config.js"></script>      <!-- CFG, Poke, PALETTE, THREEc alias   -->
+<script src="js/scene.js"></script>       <!-- renderer, lights, cage, textures    -->
+<script src="js/particles.js"></script>   <!-- buffers, seeding, matrix, mesh      -->
+<script src="js/creature.js"></script>    <!-- articulated model, gait, piloting   -->
+<script src="js/grid.js"></script>        <!-- uniform grid (short-range)          -->
+<script src="js/octree.js"></script>      <!-- Barnes–Hut octree (gravity)         -->
+<script src="js/simulation.js"></script>  <!-- integrator, viz, mesh sync          -->
+<script src="js/camera.js"></script>      <!-- orbit / zoom / poke input           -->
+<script src="js/ui.js"></script>          <!-- console panel, presets, perturb     -->
+<script src="js/main.js"></script>        <!-- frame loop + bootstrap              -->
+</body>
+</html>
