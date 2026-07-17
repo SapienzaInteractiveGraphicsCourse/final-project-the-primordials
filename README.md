@@ -60,11 +60,3 @@ python3 -m http.server 8000
 ```
 
 Then visit `http://localhost:8000`.
-
-## Credits
-
-Concept inspired by hunar4321's *Particle Life* and Jeffrey Ventrella's *Clusters*, extended to 3D with variable mass, Barnes–Hut gravity, space-warping tools, and a piloted articulated creature.
-
-## Authors
-
-_[team member names]_
