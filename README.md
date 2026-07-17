@@ -6,7 +6,7 @@ Project for the **Interactive Graphics** course — Prof. Marco Schaerf, Dept. o
 
 **🔗 Live demo:** https://sapienzainteractivegraphicscourse.github.io/final-project-the-primordials/
 
-**📄 Project report:** _[link to be added]_
+**📄 Project report:** <https://raw.githubusercontent.com/SapienzaInteractiveGraphicsCourse/final-project-the-primordials/main/docs/report.pdf>
 
 ---
 
