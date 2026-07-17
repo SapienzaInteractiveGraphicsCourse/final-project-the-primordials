@@ -1,4 +1,4 @@
-# The Primordials
+# Primordia
 
 A 3D emergent-life sandbox built with Three.js: **Barnes–Hut N-body gravity** combined with **short-range particle-life "chemistry"**, a piloted, procedurally-animated hierarchical creature, real-time space-warping tools, and a dynamic streamline visualization of the gravitational field.
 
@@ -12,7 +12,7 @@ Project for the **Interactive Graphics** course — Prof. Marco Schaerf, Dept. o
 
 ## Overview
 
-The Primordials simulates thousands of particles under two combined force scales:
+Primordia simulates thousands of particles under two combined force scales:
 
 - **Chemistry (short-range):** an asymmetric, type-based attraction/repulsion matrix (à la particle-life / Clusters) that produces emergent local patterns — cells, chasing trails, worms, crystals.
 - **Gravity (long-range):** universal mass-based attraction accelerated with a Barnes–Hut octree, producing large-scale structures such as clusters and orbits.
