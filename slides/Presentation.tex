@@ -1,11 +1,3 @@
-%=============================================================================
-%  PRIMORDIA — presentation (15 minutes)
-%  Interactive Graphics course
-%
-%  Requires, in the same folder (from the template you are using):
-%    beamerthemesintef.sty, sintefcolor.sty, assets/logo_RGB, assets/logo_RGB_negative
-%  Compile with:  pdflatex slides.tex   (twice)
-%=============================================================================
 \documentclass[10pt]{beamer}
 
 \usetheme{sintef}
@@ -20,13 +12,12 @@
 % Uncomment if you have a title background image in assets/
 % \titlebackground*{assets/background}
 
-\title{PRIMORDIA}
+\title{Primordia}
 \subtitle{A 3D emergence laboratory: two-scale particle life, Barnes--Hut gravity
           and a piloted articulated creature}
 \course{Interactive Graphics}
-\author{Author name}
-\IDnumber{matricola}
-\date{\today}
+\author{Alessio Bandiera, Armando Coppola}
+\IDnumber{1985878, 2003964}
 
 %=============================================================================
 \begin{document}
@@ -106,7 +97,7 @@
 	\begin{itemize}
 		\item Parallel typed arrays: positions, velocities, type, size, mass
 		\item Cache locality: the inner loop streams, it does not chase pointers
-		\item Allocated once $\Rightarrow$ \textbf{zero allocations per frame} $\Rightarrow$ the GC never pauses the animation
+		\item Allocated once $\implies$ \textbf{zero allocations per frame} $\implies$ the GC never pauses the animation
 		\item Predictable types: JIT emits unboxed floating-point code for the whole loop
 		\item Same discipline for the octree: 13 typed arrays, not a tree of node objects
 	\end{itemize}
@@ -173,7 +164,7 @@
 
 \begin{frame}{Uniform grid}
 	\begin{itemize}
-		\item Cell size $=$ interaction radius $\Rightarrow$ search only the \textbf{27 neighbouring cells}
+		\item Cell size $=$ interaction radius $\implies$ search only the \textbf{27 neighbouring cells}
 		\item Rebuilt from scratch \textbf{every frame} by a \textbf{counting sort} for placing particles of the same cell \textbf{contiguous in memory}
 		\item Build $O(N + \text{cells})$ allocation-free
 	\end{itemize}
@@ -303,64 +294,63 @@
 \section{Interactions}
 %=============================================================================
 
-\begin{frame}{Five registers, starting with the camera}
-	\begin{block}{}
-		\centering \textbf{Look \textbullet\ Touch \textbullet\ Strike \textbullet\ Inhabit \textbullet\ Legislate}
-	\end{block}
-	\vspace{1ex}
-	\textbf{Camera: a hand-written spherical orbit}
-	\begin{itemize}
-		\item $\phi$ clamped off the poles $\Rightarrow$ \texttt{lookAt} never degenerates and flips the view
-		\item Zoom is \textbf{multiplicative} $\Rightarrow$ it feels linear at every scale
-		\item Pan speed scales with radius $\Rightarrow$ constant fraction of the screen at any zoom
-		\item Right-drag always orbits $\Rightarrow$ the user is never trapped inside a tool
-		\item Panning silently cancels follow mode $\Rightarrow$ the camera never fights the user
-	\end{itemize}
-\end{frame}
+% \begin{frame}{Five registers, starting with the camera}
+% 	\begin{block}{}
+% 		\centering \textbf{Look \textbullet\ Touch \textbullet\ Strike \textbullet\ Inhabit \textbullet\ Legislate}
+% 	\end{block}
+% 	\vspace{1ex}
+% 	\textbf{Camera: a hand-written spherical orbit}
+% 	\begin{itemize}
+% 		\item $\phi$ clamped off the poles $\implies$ \texttt{lookAt} never degenerates and flips the view
+% 		\item Zoom is \textbf{multiplicative} $\implies$ it feels linear at every scale
+% 		\item Pan speed scales with radius $\implies$ constant fraction of the screen at any zoom
+% 		\item Right-drag always orbits $\implies$ the user is never trapped inside a tool
+% 		\item Panning silently cancels follow mode $\implies$ the camera never fights the user
+% 	\end{itemize}
+% \end{frame}
 
 \begin{frame}{Touch and strike}
-	\textbf{Four drag tools:} Orbit \textbullet\ Push \textbullet\ Pull \textbullet\ Warp (swirl + collapse + axial compression)
+	\textbf{Four drag tools:} Orbit \textbullet\ Push \textbullet\ Pull \textbullet\ Warp
 	\begin{itemize}
-		\item Where is the cursor in 3D? Unprojected onto the \textbf{camera-facing plane through the orbit target}:
-		      the tool acts at the depth you are looking at, from any angle
-		\item Swirl axis captured at drag start $\Rightarrow$ the whirlpool is always face-on
-		\item Quadratic falloff, no hard shell; a marker sphere shows the exact reach
+		\item Warp is swirl + collapse + axial compression
+		      \begin{itemize}
+			      \item Swirl axis captured at drag start, and the whirlpool is always face-on
+		      \end{itemize}
+		\item A marker sphere shows the exact reach
 	\end{itemize}
 	\vspace{1ex}
-	\textbf{Six one-shot impulses:} Shockwave \textbullet\ Implode \textbullet\ Vortex \textbullet\ Warp \textbullet\ Jitter \textbullet\ \textbf{Fold}
-	\begin{itemize}
-		\item \textbf{Fold} is a transformation of space, not a force
-		\item It mirrors \textbf{position and velocity} $\Rightarrow$ two coherent counter-rotating halves that then collide
-	\end{itemize}
+	\textbf{Six one-shot impulses:} Shockwave \textbullet\ Implode \textbullet\ Vortex \textbullet\ Warp \textbullet\ Jitter \textbullet\ Fold
+	\begin{block}{}
+		\centering Drag tools add a force, while impulses modify velocity. \\
+		Fold modifies position.
+	\end{block}
 \end{frame}
 
-\begin{frame}{Inhabit: piloting the Grazer}
+\begin{frame}{Piloting the Grazer}
 	\begin{itemize}
 		\item WASD + QE + boost; \textbf{force-based}, not positional
 		\item Input builds an acceleration in the \textbf{creature's local frame}
-		\item Normalised before scaling $\Rightarrow$ diagonals are not $\sqrt{2}$ times faster (the classic bug)
 		\item Same framerate-independent exponential damping as the particle friction
-		\item The result has weight: it accelerates, coasts, and \textbf{stirs the soup as it goes}
-		\item Follow camera lerps at 5\% per frame --- an instant snap would jitter with the hover bob
-		\item The hint bar fades in only while moving: discoverable, not permanent
+		      \begin{itemize}
+			      \item The result has weight: it accelerates, coasts, and \textbf{stirs the soup as it goes}
+		      \end{itemize}
+		\item Follow camera lerps at 5\% per frame: an instant snap would jitter with the hover bob
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Legislate: the rule matrix}
-	\textbf{The most consequential interaction is the smallest widget.}
+\begin{frame}{The interaction matrix}
 	\begin{itemize}
 		\item $T \times T$ grid, rows act on columns; colour encodes sign and magnitude
 		\item One click cycles a cell through five discrete values
 		\item Read directly by the force kernel: \textbf{no apply button, no reseed}
 	\end{itemize}
 	\begin{block}{Two clicks}
-		\centering Set one cell to $+1$ and its mirror to $-1$: type 0 chases, type 1 flees,
-		the pair self-propels across the volume. Make the matrix symmetric instead: static clumps.\\
+		\centering Set one cell to $+1$ and its mirror to $-1$: type 0 chases, type 1 flees, the pair self-propels \\ across the volume. Make the matrix symmetric instead: static clumps. \\
 		\textbf{The user discovers asymmetry in ten seconds, without reading anything.}
 	\end{block}
 	\begin{itemize}\small
-		\item \textbf{Nine presets} --- the preset fixes the \emph{regime}, the rerolled matrix keeps the outcome new
-		\item \textbf{Live reconfiguration} --- particle count reallocates every buffer; world size \emph{scales}
+		\item \textbf{Nine presets}: each preset fixes the \emph{regime}
+		\item \textbf{Live reconfiguration}: particle count reallocates every buffer; world size \emph{scales}
 		      positions instead of clipping them, so structures survive the resize
 	\end{itemize}
 \end{frame}
@@ -369,35 +359,26 @@
 \section{Wrap-up}
 %=============================================================================
 
-\begin{frame}{Limitations --- all deliberate}
+\begin{frame}{Limitations}
 	\begin{itemize}
 		\item \textbf{Single-threaded, CPU-bound} beyond about 3000 particles\\
-		      {\small a Web Worker with shared memory needs COOP/COEP headers $\Rightarrow$ needs a server
-		      $\Rightarrow$ breaks the \texttt{file://} promise}
-		\item \textbf{Gravity is not periodic} under wrap --- an Ewald summation is out of scope
-		\item \textbf{Sphere collision proxy}, not the visual silhouette
-		\item \textbf{No foot-locking} --- a slight skate at high speed; would need inverse kinematics
+		\item \textbf{Gravity is not periodic} under wrap
+		\item \textbf{Creature's collision proxy is spherical}, not the visual silhouette that would take the legs into account
+		\item \textbf{No foot-locking}: slight skating at high speed --- fixing this issue would require inverse kinematics
 		\item \textbf{Momentum is not conserved} --- by design, and so there is nothing to validate against
 	\end{itemize}
-	\vspace{1ex}
-	\textbf{Next:} GPU-side integration \textbullet\ IK with foot locking \textbullet\ flocking creatures
-	\textbullet\ matrices shareable as URLs
+	% \vspace{1ex}
+	% \textbf{Next:} GPU-side integration \textbullet\ IK with foot locking \textbullet\ flocking creatures
+	% \textbullet\ matrices shareable as URLs
 \end{frame}
 
 \begin{frame}{Takeaway}
 	\begin{itemize}
 		\item Two simple laws at two scales produce cells, chains, filaments, orbits, spirals and swarms ---
 		      \textbf{none of which exists anywhere in the source}
-		\item What makes it interactive rather than merely correct:
-		      \textbf{each law paired with the structure that fits its scale}
-		\item Pooled typed arrays everywhere $\Rightarrow$ zero steady-state allocation, no GC stutter
-		\item The approximation is not hidden behind the curtain --- \textbf{the $\theta$ slider puts it on stage}
+		\item Pooled typed arrays everywhere $\implies$ zero steady-state allocation, no GC stutter
 		\item Fully asset-free: 1 HTML + 1 CSS + 10 JS files, one dependency
 	\end{itemize}
-	\vspace{2ex}
-	\begin{block}{}
-		\centering \textbf{Demo}
-	\end{block}
 \end{frame}
 
 \backmatter

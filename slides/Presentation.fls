@@ -533,13 +533,9 @@ INPUT Presentation.toc
 INPUT ./Presentation.toc
 INPUT ./Presentation.toc
 INPUT Presentation.toc
-INPUT /nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/tfm/google/carlito/Crlt-Bold-osf-ts1.tfm
-INPUT /nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/vf/google/carlito/Crlt-Bold-osf-ts1.vf
-INPUT /nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/tfm/google/carlito/Crlt-Bold-osf-ts1--base.tfm
 INPUT ./Presentation.toc
 INPUT ./Presentation.toc
 INPUT Presentation.toc
-INPUT /nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/tfm/google/carlito/Crlt-osf-ot1.tfm
 INPUT /nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/tfm/google/carlito/Crlt-Italic-osf-ot1.tfm
 OUTPUT Presentation.nav
 OUTPUT Presentation.toc
