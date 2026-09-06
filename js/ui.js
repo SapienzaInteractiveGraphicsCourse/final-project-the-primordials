@@ -210,7 +210,7 @@ function buildPanel(){
   gpr.appendChild(plist);
   P.appendChild(gpr);
 
-  P.appendChild(el('div','foot','Idea after hunar4321 / Ventrella “Clusters”. Extended to 3D, variable mass, Barnes–Hut &amp; a piloted articulated model for the Interactive Graphics course.'));
+  P.appendChild(el('div','foot','Ventrella “Clusters”. Extended to 3D, variable mass, Barnes–Hut &amp; a piloted articulated model for the Interactive Graphics course.'));
 
   buildMatrixUI(matBox);
 }

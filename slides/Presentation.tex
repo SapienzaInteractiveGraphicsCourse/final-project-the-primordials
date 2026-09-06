@@ -1,0 +1,411 @@
+%=============================================================================
+%  PRIMORDIA — presentation (15 minutes)
+%  Interactive Graphics course
+%
+%  Requires, in the same folder (from the template you are using):
+%    beamerthemesintef.sty, sintefcolor.sty, assets/logo_RGB, assets/logo_RGB_negative
+%  Compile with:  pdflatex slides.tex   (twice)
+%=============================================================================
+\documentclass[10pt]{beamer}
+
+\usetheme{sintef}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{booktabs}
+\usepackage{amssymb}
+
+% Uncomment if you have a title background image in assets/
+% \titlebackground*{assets/background}
+
+\title{PRIMORDIA}
+\subtitle{A 3D emergence laboratory: two-scale particle life, Barnes--Hut gravity
+          and a piloted articulated creature}
+\course{Interactive Graphics}
+\author{Author name}
+\IDnumber{matricola}
+\date{\today}
+
+%=============================================================================
+\begin{document}
+
+\maketitle
+
+%=============================================================================
+\section{Overview}
+%=============================================================================
+
+\begin{frame}{The idea}
+\textbf{Complexity does not require complicated rules.}
+\begin{itemize}
+  \item Thousands of particles, \textbf{two force laws}, nothing else
+  \item \textbf{Short-range ``chemistry''} $\to$ cells, membranes, filaments, worms
+  \item \textbf{Long-range gravity} $\to$ collapse, clumps, orbits, spiral arms
+  \item The user never builds structures --- the user \textbf{edits the rules}
+\end{itemize}
+\vspace{1ex}
+\textbf{Self-imposed constraints}
+\begin{itemize}
+  \item Everything procedural: no meshes, no images, no animation clips
+  \item Everything live: no parameter change requires a reload
+  \item The acceleration structures are on stage, not hidden
+  \item Double-click \texttt{index.html}: no server, no build step
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Environment}
+\begin{itemize}
+  \item \textbf{WebGL} through \textbf{three.js r128} --- not raw GL calls
+  \item WebGL 2 when available, silent WebGL 1 fallback
+  \item \texttt{antialias}, high-performance GPU hint, sRGB output
+  \item Pixel ratio clamped to 2: $4\times$ fewer fragments on hi-DPI, no visible loss
+  \item \textbf{Plain ES6 JavaScript}: no TypeScript, no bundler, no transpiler
+  \item \textbf{Classic scripts, not ES modules} --- modules are blocked over \texttt{file://}
+  \item Single-threaded, inside the animation-frame callback
+\end{itemize}
+\vspace{1ex}
+\begin{block}{}
+\centering three.js is a rendering back end and a scene graph. Never a simulation framework.
+\end{block}
+\end{frame}
+
+\begin{frame}{What we did \emph{not} write}
+\textbf{One runtime dependency: three.js r128} (single \texttt{<script>} from a CDN)\\
+{\small renderer \textbullet\ scene graph \textbullet\ camera \textbullet\ primitives \textbullet\
+\texttt{MeshStandardMaterial} \textbullet\ \texttt{InstancedMesh} \textbullet\ lights \textbullet\
+\texttt{CanvasTexture} \textbullet\ \texttt{BufferGeometry} \textbullet\ math types}
+\vspace{1ex}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Everything else is ours}
+\begin{itemize}\small
+  \item No UI framework, no dat.GUI, no physics engine, no gl-matrix, no bundler
+  \item Not even \texttt{OrbitControls}: our camera shares mouse buttons with the poke tools
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+\textbf{Zero assets}
+\begin{itemize}\small
+  \item No \texttt{.obj}/\texttt{.gltf}/\texttt{.fbx}, no rigs, no keyframes, no images, no web fonts
+  \item Geometry from parametric primitives, textures painted into a canvas at start-up
+\end{itemize}
+\end{column}
+\end{columns}
+\vspace{1ex}
+{\footnotesize Credit: \emph{particle life} / ``Clusters'' concept (Ventrella) \textbullet\ Barnes--Hut
+algorithm --- implementations ours.}
+\end{frame}
+
+%=============================================================================
+\section{Simulation engine}
+%=============================================================================
+
+\begin{frame}{Architecture}
+\begin{itemize}
+  \item 1 HTML + 1 CSS + \textbf{10 JS files}, one responsibility each
+  \item Load order \emph{is} the dependency graph:\\
+        {\small\texttt{config $\to$ scene $\to$ particles $\to$ creature $\to$ grid $\to$ octree $\to$
+        simulation $\to$ camera $\to$ ui $\to$ main}}
+  \item Bootstrap: five lines
+\end{itemize}
+\vspace{1ex}
+\textbf{Particles are not objects --- structure of arrays}
+\begin{itemize}
+  \item Parallel typed arrays: positions, velocities, type, size, mass
+  \item Cache locality: the inner loop streams, it does not chase pointers
+  \item Allocated once $\Rightarrow$ \textbf{zero allocations per frame} $\Rightarrow$ the GC never pauses the animation
+  \item Same discipline for the octree: 13 typed arrays, not a tree of node objects
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Two scales, two data structures}
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & \textbf{Chemistry} & \textbf{Gravity}\\
+\midrule
+Range        & short, hard cut-off & infinite\\
+Depends on   & \textbf{type} (matrix) & \textbf{mass}\\
+Naive cost   & $O(N^2)$ & $O(N^2)$\\
+Structure    & \textbf{uniform grid} & \textbf{Barnes--Hut octree}\\
+Why valid    & compact support & distant cluster $\approx$ its centre of mass\\
+\bottomrule
+\end{tabular}
+\vspace{2ex}
+\begin{block}{}
+\centering This pairing is the engineering core of the project.\\
+Target: 1000--3000 mutually interacting particles at 60\,Hz.
+\end{block}
+\end{frame}
+
+\begin{frame}{Chemistry: the force profile}
+Piecewise linear, three regimes:
+\begin{enumerate}
+  \item \textbf{Universal repulsion core} (below $\beta$) --- type-independent
+  \item \textbf{Typed triangular lobe} --- scaled by the matrix entry
+  \item \textbf{Exactly zero} beyond $r_{\max}$
+\end{enumerate}
+\vspace{1ex}
+\textbf{Why each one matters}
+\begin{itemize}
+  \item The core ignores type $\Rightarrow$ nothing collapses to a point; $\beta$ is an incompressibility dial
+  \item Zero, not ``asymptotically small'' $\Rightarrow$ the grid is a \textbf{complete} search, not an approximation
+  \item The matrix is \textbf{asymmetric}
+\end{itemize}
+\begin{block}{}
+\centering Newton's third law is violated on purpose. Red chases green, green flees red:
+the pair self-propels. That asymmetry is the engine of every moving pattern.
+\end{block}
+\end{frame}
+
+\begin{frame}{Uniform grid}
+\begin{itemize}
+  \item Cell size $=$ interaction radius $\Rightarrow$ search only the \textbf{27 neighbouring cells}
+  \item Rebuilt from scratch \textbf{every frame} by a three-pass \textbf{counting sort}:\\
+        histogram $\to$ prefix sum $\to$ scatter
+  \item The members of a cell end up \textbf{contiguous in memory}
+  \item Build $O(N + \text{cells})$, query $O(N)$ at constant density --- allocation-free
+\end{itemize}
+\vspace{2ex}
+\begin{block}{At $N = 3000$}
+\centering $9 \cdot 10^6$ pair tests per frame $\longrightarrow$ a few tens of thousands.\\
+The HUD reports the pairs actually evaluated, live.
+\end{block}
+\end{frame}
+
+\begin{frame}{Gravity: Barnes--Hut octree}
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+\begin{itemize}\small
+  \item Pooled arrays indexed by node id, sized once
+  \item Rebuilt every frame with \textbf{zero allocations}, children created lazily
+  \item Insertion handles the hard case: occupied leaf $\Rightarrow$ push both bodies down, recurse
+  \item Guard on cell size: coincident bodies cannot subdivide forever
+  \item \textbf{Explicit stack}, not recursion: bounded depth, no call frames
+  \item Squared opening test: no square root per node
+  \item Softening stops close encounters from slingshotting particles to infinity
+\end{itemize}
+\end{column}
+\begin{column}{0.45\textwidth}
+\textbf{$\theta$ is the algorithm's dial\\ --- and it is a slider}
+\vspace{1ex}
+{\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+$\theta$ & behaviour & cost\\
+\midrule
+$\to 0$ & exact, opens all & $O(N^2)$\\
+$0.8$   & default & $O(N\log N)$\\
+$1.6$   & visible artefacts & fastest\\
+\bottomrule
+\end{tabular}}
+\vspace{1.5ex}
+
+The HUD node count makes the accuracy/speed trade-off legible in real time.
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Integration, stability, boundaries}
+\textbf{Semi-implicit (symplectic) Euler} --- same cost as explicit, far more stable for orbits
+\begin{itemize}
+  \item Friction as a \textbf{half-life}, not a coefficient: framerate-independent and physically meaningful
+  \item Time-step clamp: returning from a background tab costs slow motion, not an explosion
+  \item Velocity clamp as the last line of defence
+  \item \textbf{Two-pass update}: all forces from start-of-step positions, then all positions\\
+        {\small a fused loop would make the result depend on particle numbering}
+\end{itemize}
+\vspace{1ex}
+\textbf{Two boundary modes, toggled live}
+\begin{itemize}
+  \item Reflecting walls with restitution
+  \item Toroidal wrap: positions \emph{and forces} wrap (minimum image + periodic cell sweep)
+  \item Gravity deliberately not wrapped --- it would need an Ewald summation
+\end{itemize}
+\end{frame}
+
+%=============================================================================
+\section{Creature and visualisation}
+%=============================================================================
+
+\begin{frame}{The Grazer: hierarchical modelling}
+\centering
+\texttt{root $\to$ hip $\times 4$ $\to$ thighPivot $\to$ knee $\to$ shinPivot $\to$ foot}\\
+{\small five levels deep, plus body, face $\to$ eye $\to$ pupil/glints, antennae $\to$ stalk/bulb}
+\vspace{2ex}
+\begin{flushleft}
+\textbf{Welded joints by construction}
+\begin{itemize}
+  \item A cylinder is born centred on the origin, aligned to $+y$: the wrong frame for a bone
+  \item Geometry baked once at build time --- rotated to $+x$, translated so the \textbf{pivot sits at the origin}
+  \item The next joint is simply a child \texttt{Group} at the end of the segment
+\end{itemize}
+\end{flushleft}
+\begin{block}{}
+\centering Segments cannot come apart --- not because the animation is careful,\\
+but because the hierarchy makes separation unrepresentable.
+\end{block}
+\end{frame}
+
+\begin{frame}{Procedural gait, and a creature that is physical}
+\textbf{No keyframes anywhere} --- a closed-form function of a phase accumulator
+\begin{itemize}
+  \item Four legs, constant offsets a quarter-cycle apart $\Rightarrow$ a coordinated walk
+  \item Half-wave rectified lift: foot planted during stance, lifted during swing
+  \item Cycle speed tracks body speed
+  \item Secondary motion, all closed-form: hover bob, antennae lean, stochastic blink, damped heading
+\end{itemize}
+\vspace{1ex}
+\textbf{Not a decorative overlay}
+\begin{itemize}
+  \item \textbf{Solid}: particles are projected out of its surface, impulse only if moving inward
+  \item \textbf{Emits a field}: radial attract/repel \emph{plus} a tangential swirl
+  \item The swirl is why particles form an orbiting disc instead of a static ball
+  \item The aura sphere is drawn at exactly the field radius: an honest depiction
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Visualising the invisible}
+\begin{itemize}
+  \item \textbf{Octree wireframe} --- large cells in empty space, tight subdivision around mass:
+        Barnes--Hut adaptivity becomes obvious in one glance
+  \item \textbf{Gravity field streamlines} --- up to 8000 samples, faint vector plus a travelling pulse;
+        the per-sample phase comes from position, so the wave sweeps diagonally and never pulses in unison
+  \item \textbf{Deforming space lattice} --- $9^3$ nodes displaced by gravity and by the user's poke,
+        always recomputed from rest positions, so no drift accumulates
+\end{itemize}
+\vspace{1ex}
+\begin{block}{The trick that makes it free}
+\centering Directions rebuilt every fourth frame (15\,Hz), pulse redrawn every frame (60\,Hz).\\
+The eye cannot tell.
+\end{block}
+\end{frame}
+
+\begin{frame}{Performance}
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Stage} & \textbf{Cost}\\
+\midrule
+Grid build               & $O(N + \text{cells})$, allocation-free\\
+Short-range forces       & $O(N)$ expected\\
+Octree build + traversal & $O(N \log N)$, allocation-free\\
+Rendering                & \textbf{one draw call} for $N$ particles\\
+Field / lattice          & only when enabled, field throttled $4\times$\\
+\bottomrule
+\end{tabular}
+\vspace{2ex}
+\begin{flushleft}
+\begin{itemize}\small
+  \item Per-instance colour written on type change; only transforms re-uploaded per frame
+  \item Coarse spheres (80 faces): 0.25M triangles at $N=3000$, the normal map restores the detail
+  \item \textbf{Steady-state allocation rate: zero}
+  \item HUD: fps \textbullet\ particles \textbullet\ pairs evaluated \textbullet\ octree nodes \textbullet\ mode
+\end{itemize}
+\end{flushleft}
+\end{frame}
+
+%=============================================================================
+\section{Interactions}
+%=============================================================================
+
+\begin{frame}{Five registers, starting with the camera}
+\begin{block}{}
+\centering \textbf{Look \textbullet\ Touch \textbullet\ Strike \textbullet\ Inhabit \textbullet\ Legislate}
+\end{block}
+\vspace{1ex}
+\textbf{Camera: a hand-written spherical orbit}
+\begin{itemize}
+  \item $\phi$ clamped off the poles $\Rightarrow$ \texttt{lookAt} never degenerates and flips the view
+  \item Zoom is \textbf{multiplicative} $\Rightarrow$ it feels linear at every scale
+  \item Pan speed scales with radius $\Rightarrow$ constant fraction of the screen at any zoom
+  \item Right-drag always orbits $\Rightarrow$ the user is never trapped inside a tool
+  \item Panning silently cancels follow mode $\Rightarrow$ the camera never fights the user
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Touch and strike}
+\textbf{Four drag tools:} Orbit \textbullet\ Push \textbullet\ Pull \textbullet\ Warp (swirl + collapse + axial compression)
+\begin{itemize}
+  \item Where is the cursor in 3D? Unprojected onto the \textbf{camera-facing plane through the orbit target}:
+        the tool acts at the depth you are looking at, from any angle
+  \item Swirl axis captured at drag start $\Rightarrow$ the whirlpool is always face-on
+  \item Quadratic falloff, no hard shell; a marker sphere shows the exact reach
+\end{itemize}
+\vspace{1ex}
+\textbf{Six one-shot impulses:} Shockwave \textbullet\ Implode \textbullet\ Vortex \textbullet\ Warp \textbullet\ Jitter \textbullet\ \textbf{Fold}
+\begin{itemize}
+  \item \textbf{Fold} is a transformation of space, not a force
+  \item It mirrors \textbf{position and velocity} $\Rightarrow$ two coherent counter-rotating halves that then collide
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Inhabit: piloting the Grazer}
+\begin{itemize}
+  \item WASD + QE + boost; \textbf{force-based}, not positional
+  \item Input builds an acceleration in the \textbf{creature's local frame}
+  \item Normalised before scaling $\Rightarrow$ diagonals are not $\sqrt{2}$ times faster (the classic bug)
+  \item Same framerate-independent exponential damping as the particle friction
+  \item The result has weight: it accelerates, coasts, and \textbf{stirs the soup as it goes}
+  \item Follow camera lerps at 5\% per frame --- an instant snap would jitter with the hover bob
+  \item The hint bar fades in only while moving: discoverable, not permanent
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Legislate: the rule matrix}
+\textbf{The most consequential interaction is the smallest widget.}
+\begin{itemize}
+  \item $T \times T$ grid, rows act on columns; colour encodes sign and magnitude
+  \item One click cycles a cell through five discrete values
+  \item Read directly by the force kernel: \textbf{no apply button, no reseed}
+\end{itemize}
+\begin{block}{Two clicks}
+\centering Set one cell to $+1$ and its mirror to $-1$: type 0 chases, type 1 flees,
+the pair self-propels across the volume. Make the matrix symmetric instead: static clumps.\\
+\textbf{The user discovers asymmetry in ten seconds, without reading anything.}
+\end{block}
+\begin{itemize}\small
+  \item \textbf{Nine presets} --- the preset fixes the \emph{regime}, the rerolled matrix keeps the outcome new
+  \item \textbf{Live reconfiguration} --- particle count reallocates every buffer; world size \emph{scales}
+        positions instead of clipping them, so structures survive the resize
+\end{itemize}
+\end{frame}
+
+%=============================================================================
+\section{Wrap-up}
+%=============================================================================
+
+\begin{frame}{Limitations --- all deliberate}
+\begin{itemize}
+  \item \textbf{Single-threaded, CPU-bound} beyond about 3000 particles\\
+        {\small a Web Worker with shared memory needs COOP/COEP headers $\Rightarrow$ needs a server
+        $\Rightarrow$ breaks the \texttt{file://} promise}
+  \item \textbf{Gravity is not periodic} under wrap --- an Ewald summation is out of scope
+  \item \textbf{Sphere collision proxy}, not the visual silhouette
+  \item \textbf{No foot-locking} --- a slight skate at high speed; would need inverse kinematics
+  \item \textbf{Momentum is not conserved} --- by design, and so there is nothing to validate against
+\end{itemize}
+\vspace{1ex}
+\textbf{Next:} GPU-side integration \textbullet\ IK with foot locking \textbullet\ flocking creatures
+\textbullet\ matrices shareable as URLs
+\end{frame}
+
+\begin{frame}{Takeaway}
+\begin{itemize}
+  \item Two simple laws at two scales produce cells, chains, filaments, orbits, spirals and swarms ---
+        \textbf{none of which exists anywhere in the source}
+  \item What makes it interactive rather than merely correct:
+        \textbf{each law paired with the structure that fits its scale}
+  \item Pooled typed arrays everywhere $\Rightarrow$ zero steady-state allocation, no GC stutter
+  \item The approximation is not hidden behind the curtain --- \textbf{the $\theta$ slider puts it on stage}
+  \item Fully asset-free: 1 HTML + 1 CSS + 10 JS files, one dependency
+\end{itemize}
+\vspace{2ex}
+\begin{block}{}
+\centering \textbf{Demo}
+\end{block}
+\end{frame}
+
+\backmatter
+
+\end{document}
