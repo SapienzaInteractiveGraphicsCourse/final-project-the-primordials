@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1788691228.94687 "Presentation.tex" "Presentation.pdf" "Presentation" 1788691232.59716 0
+["pdflatex"] 1788704400.94085 "Presentation.tex" "Presentation.pdf" "Presentation" 1788704404.53721 0
   "/nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/enc/dvips/carlito/crlt_j4hweq.enc" 1 3199 785d1f4f03ee0bb70108af8679871db0 ""
   "/nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/enc/dvips/carlito/crlt_zisnlb.enc" 1 3105 fe84215d6e1e68b95a7d9a8041ee418c ""
   "/nix/store/46ijisvi9d4k5mxjq6w1lhn9cb12a7v8-texlive-2025-env-texmfdist/fonts/map/fontname/texfonts.map" 1 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -287,11 +287,11 @@
   "/nix/store/qmzwff5xfj5p0939x57r6zdcwmns5hsa-texlive-2025-env/share/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1 5523625 054b252b919873abf47b34f539932fd0 ""
   "/nix/store/qmzwff5xfj5p0939x57r6zdcwmns5hsa-texlive-2025-env/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1 3600354 51a01808178d47858f8d257eb26625dd ""
   "/nix/store/qmzwff5xfj5p0939x57r6zdcwmns5hsa-texlive-2025-env/share/texmf-var/web2c/texmf.cnf" 1 43847 f48592b9287cc95e04f35dfffd2a156e ""
-  "Presentation.aux" 1788691232.40853 5315 530944ea61ac4e9122c2b519f440fde6 "pdflatex"
-  "Presentation.nav" 1788691232.41053 3395 84080a412361ac78e57ee0b99ee8a4fd "pdflatex"
-  "Presentation.out" 1788691232.41053 574 62a40b0519c12c9e93c12e67f0d535d6 "pdflatex"
-  "Presentation.tex" 1788691228.00147 18975 03965171956a7c3dad0825c99af950fc ""
-  "Presentation.toc" 1788691232.41053 283 76d594c075667799e58955e0fe3c78c6 "pdflatex"
+  "Presentation.aux" 1788704404.341 5315 530944ea61ac4e9122c2b519f440fde6 "pdflatex"
+  "Presentation.nav" 1788704404.343 3395 84080a412361ac78e57ee0b99ee8a4fd "pdflatex"
+  "Presentation.out" 1788704404.343 574 62a40b0519c12c9e93c12e67f0d535d6 "pdflatex"
+  "Presentation.tex" 1788704399.05789 17709 0315b71de41abe404dec4f7cb581d2a2 ""
+  "Presentation.toc" 1788704404.343 283 76d594c075667799e58955e0fe3c78c6 "pdflatex"
   "assets/logo_RGB.png" 1788685541.72235 494820 a10b3732d93cddcbd6928b39cd163f2b ""
   "assets/logo_RGB_negative.png" 1788685541.72935 547777 b363a1977408f693d33310188189080a ""
   "beamerthemesintef.sty" 1788685541.72935 9395 226cdb27d300b6b75161294224baeb02 ""

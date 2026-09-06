@@ -216,20 +216,18 @@
 \end{frame}
 
 \begin{frame}{Integration, stability, boundaries}
-	\textbf{Semi-implicit (symplectic) Euler} --- same cost as explicit, far more stable for orbits
+	\textbf{Semi-implicit (symplectic) Euler}, updating velocity first, then position based on the former
 	\begin{itemize}
 		\item Friction as a \textbf{half-life}, not a coefficient: framerate-independent and physically meaningful
 		\item Time-step clamp: returning from a background tab costs slow motion, not an explosion
 		\item Velocity clamp as the last line of defence
-		\item \textbf{Two-pass update}: all forces from start-of-step positions, then all positions\\
-		      {\small a fused loop would make the result depend on particle numbering}
 	\end{itemize}
 	\vspace{1ex}
 	\textbf{Two boundary modes, toggled live}
 	\begin{itemize}
 		\item Reflecting walls with restitution
-		\item Toroidal wrap: positions \emph{and forces} wrap (minimum image + periodic cell sweep)
-		\item Gravity deliberately not wrapped --- it would need an Ewald summation
+		\item Toroidal wrap: positions \emph{and forces} wrap
+		\item Gravity deliberately not wrapped
 	\end{itemize}
 \end{frame}
 
@@ -240,29 +238,23 @@
 \begin{frame}{The Grazer: hierarchical modelling}
 	\centering
 	\texttt{root $\to$ hip $\times 4$ $\to$ thighPivot $\to$ knee $\to$ shinPivot $\to$ foot}\\
-	{\small five levels deep, plus body, face $\to$ eye $\to$ pupil/glints, antennae $\to$ stalk/bulb}
 	\vspace{2ex}
 	\begin{flushleft}
-		\textbf{Welded joints by construction}
 		\begin{itemize}
-			\item A cylinder is born centred on the origin, aligned to $+y$: the wrong frame for a bone
-			\item Geometry baked once at build time --- rotated to $+x$, translated so the \textbf{pivot sits at the origin}
-			\item The next joint is simply a child \texttt{Group} at the end of the segment
+			\item Additional hierarchies for face $\to$ eye $\to$ pupil/glints, and antennae $\to$ stalk/bulb
+			\item Cylinders for the limbs are translated \textbf{once at build time}, so the \textbf{pivot sits at the origin}
+
+			\item Segments cannot come apart: the hierarchy makes separation unrepresentable
 		\end{itemize}
 	\end{flushleft}
-	\begin{block}{}
-		\centering Segments cannot come apart --- not because the animation is careful,\\
-		but because the hierarchy makes separation unrepresentable.
-	\end{block}
 \end{frame}
 
 \begin{frame}{Procedural gait, and a creature that is physical}
 	\textbf{No keyframes anywhere} --- a closed-form function of a phase accumulator
 	\begin{itemize}
-		\item Four legs, constant offsets a quarter-cycle apart $\Rightarrow$ a coordinated walk
-		\item Half-wave rectified lift: foot planted during stance, lifted during swing
+		\item Four legs, constant offsets a quarter-cycle apart to simulate a coordinated walk
 		\item Cycle speed tracks body speed
-		\item Secondary motion, all closed-form: hover bob, antennae lean, stochastic blink, damped heading
+		\item Secondary motion, all closed-form: antennae lean, stochastic blink, damped heading
 	\end{itemize}
 	\vspace{1ex}
 	\textbf{Not a decorative overlay}
@@ -270,46 +262,39 @@
 		\item \textbf{Solid}: particles are projected out of its surface, impulse only if moving inward
 		\item \textbf{Emits a field}: radial attract/repel \emph{plus} a tangential swirl
 		\item The swirl is why particles form an orbiting disc instead of a static ball
-		\item The aura sphere is drawn at exactly the field radius: an honest depiction
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Visualising the invisible}
 	\begin{itemize}
-		\item \textbf{Octree wireframe} --- large cells in empty space, tight subdivision around mass:
-		      Barnes--Hut adaptivity becomes obvious in one glance
-		\item \textbf{Gravity field streamlines} --- up to 8000 samples, faint vector plus a travelling pulse;
-		      the per-sample phase comes from position, so the wave sweeps diagonally and never pulses in unison
-		\item \textbf{Deforming space lattice} --- $9^3$ nodes displaced by gravity and by the user's poke,
-		      always recomputed from rest positions, so no drift accumulates
+		\item \textbf{Octree wireframe}: large cells in empty space, tight subdivision around mass showing Barnes--Hut adaptivity
+		\item \textbf{Gravity field streamlines}: up to 8000 samples, faint vector plus a travelling pulse;
+		      \begin{itemize}
+			      \item field directions rebuilt every fourth frame (15\,Hz)
+			      \item pulse redrawn every frame (60\,Hz)
+		      \end{itemize}
+		\item \textbf{Deforming space lattice}: $9^3$ nodes displaced by gravity and by the user's poke
 	\end{itemize}
-	\vspace{1ex}
-	\begin{block}{The trick that makes it free}
-		\centering Directions rebuilt every fourth frame (15\,Hz), pulse redrawn every frame (60\,Hz).\\
-		The eye cannot tell.
-	\end{block}
 \end{frame}
 
 \begin{frame}{Performance}
 	\centering
 	\begin{tabular}{@{}ll@{}}
 		\toprule
-		\textbf{Stage}           & \textbf{Cost}                                \\
+		\textbf{Stage}           & \textbf{Cost}                            \\
 		\midrule
-		Grid build               & $O(N + \text{cells})$, allocation-free       \\
-		Short-range forces       & $O(N)$ expected                              \\
-		Octree build + traversal & $O(N \log N)$, allocation-free               \\
-		Rendering                & \textbf{one draw call} for $N$ particles     \\
-		Field / lattice          & only when enabled, field throttled $4\times$ \\
+		Grid build               & $O(N + \text{cells})$, allocation-free   \\
+		Short-range forces       & $O(N)$ expected                          \\
+		Octree build + traversal & $O(N \log N)$, allocation-free           \\
+		Rendering                & \textbf{one draw call} for $N$ particles \\
+		Field / lattice          & only when enabled                        \\
 		\bottomrule
 	\end{tabular}
 	\vspace{2ex}
 	\begin{flushleft}
 		\begin{itemize}\small
-			\item Per-instance colour written on type change; only transforms re-uploaded per frame
-			\item Coarse spheres (80 faces): 0.25M triangles at $N=3000$, the normal map restores the detail
-			\item \textbf{Steady-state allocation rate: zero}
-			\item HUD: fps \textbullet\ particles \textbullet\ pairs evaluated \textbullet\ octree nodes \textbullet\ mode
+			\item 80 faces per sphere: 250k triangles at $N=3000$
+			\item No allocation in teady-state
 		\end{itemize}
 	\end{flushleft}
 \end{frame}
